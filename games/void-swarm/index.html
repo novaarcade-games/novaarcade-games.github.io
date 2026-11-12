@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Void Swarm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,700;0,800;0,900;1,900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/game.css">
+<style>
+  #bar { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(520px, calc(100% - 32px)); z-index: 10; pointer-events: none; }
+  #bar .row { display: flex; justify-content: space-between; align-items: end; margin-bottom: 6px; font: 800 14px/1 var(--display); letter-spacing: .1em; }
+  #hearts { display: flex; gap: 4px; }
+  #hearts i { width: 16px; height: 16px; display: block; background: #ff2a8a; clip-path: path("M8 15 1.5 8.5A4 4 0 0 1 8 3a4 4 0 0 1 6.5 5.5Z"); filter: drop-shadow(0 0 6px #ff2a8a); }
+  #hearts i.off { background: rgba(255,255,255,.15); filter: none; }
+  #xp { height: 8px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; border: 1px solid rgba(255,255,255,.12); }
+  #xp div { height: 100%; width: 0; background: linear-gradient(90deg, #00f0ff, #7cffcb); box-shadow: 0 0 12px #00f0ff; transition: width .15s; }
+  #lvl { color: #7cffcb; } #time { color: var(--muted); font-family: var(--num); font-size: 16px; }
+  #up { position: fixed; inset: 0; z-index: 35; display: none; place-items: center; padding: 16px; background: rgba(5,0,12,.72); backdrop-filter: blur(4px); }
+  #up.show { display: grid; }
+  #up h2 { margin: 0 0 16px; text-align: center; font: 900 30px/1 var(--display); letter-spacing: .12em; color: #7cffcb; text-shadow: 0 0 20px #00f0ff; }
+  #cards { display: grid; grid-template-columns: repeat(3, minmax(0, 200px)); gap: 14px; }
+  @media (max-width: 640px) { #cards { grid-template-columns: 1fr; width: min(340px, 100%); } }
+  .card { cursor: pointer; text-align: left; border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 18px 16px; color: #fff;
+    background: linear-gradient(160deg, rgba(40,16,80,.95), rgba(14,6,30,.95)); font: 600 15px/1.35 var(--font);
+    transition: transform .12s, border-color .12s, box-shadow .12s; animation: ub-pop .3s backwards; }
+  .card:hover, .card:focus { transform: translateY(-4px); border-color: var(--c); box-shadow: 0 0 30px color-mix(in srgb, var(--c) 45%, transparent); outline: none; }
+  .card b { display: block; font: 800 17px/1.1 var(--display); color: var(--c); margin: 8px 0 6px; letter-spacing: .04em; }
+  .card .ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font: 900 20px/1 var(--display);
+    background: color-mix(in srgb, var(--c) 22%, transparent); color: var(--c); }
+  .card small { color: var(--muted); display: block; margin-top: 8px; }
+  .card kbd { float: right; font: 700 12px/1 var(--font); color: var(--muted); border: 1px solid rgba(255,255,255,.2); border-radius: 6px; padding: 3px 6px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="bar">
+  <div class="row"><div id="hearts"></div><div id="time">0:00</div><div id="lvl">LV 1</div></div>
+  <div id="xp"><div></div></div>
+</div>
+<div id="up"><div><h2>LEVEL UP</h2><div id="cards"></div></div></div>
+<script src="../../shared/arcade.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

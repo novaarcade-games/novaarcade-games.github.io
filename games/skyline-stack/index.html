@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Skyline Stack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,700;0,800;0,900;1,900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/game.css">
+<style>
+  body { background: linear-gradient(180deg, var(--top, #1b0b3a), var(--bot, #ff6f91)); transition: background 1s; }
+  #bg { position: fixed; inset: 0; background: linear-gradient(180deg, var(--top), var(--bot)); transition: opacity .8s; }
+  #big { position: fixed; top: 14%; left: 0; right: 0; text-align: center; z-index: 5; pointer-events: none;
+    font: 900 clamp(64px, 16vw, 130px)/1 var(--num); color: rgba(255,255,255,.92); text-shadow: 0 6px 30px rgba(0,0,0,.25); }
+  #combo { position: fixed; top: calc(14% + clamp(62px, 15vw, 118px)); left: 0; right: 0; text-align: center; z-index: 5;
+    pointer-events: none; font: 800 18px/1 var(--display); letter-spacing: .2em; color: #fff; opacity: 0; transition: opacity .2s; }
+  .ub-hud .ub-stats > div:first-child { display: none; }
+</style>
+</head>
+<body>
+<div id="big">0</div>
+<div id="combo">PERFECT</div>
+<script src="../../vendor/three.min.js"></script>
+<script src="../../shared/arcade.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

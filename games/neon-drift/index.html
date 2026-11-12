@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Neon Drift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,700;0,800;0,900;1,900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/game.css">
+<style>
+  #speed { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 10;
+    font: 800 14px/1 var(--display); letter-spacing: .2em; color: var(--muted); text-align: center; pointer-events: none; }
+  #speed b { display: block; font: italic 900 30px/1 var(--num); color: #fff; text-shadow: 0 0 14px #ff2a8a; }
+  #mult { position: fixed; right: 16px; top: 64px; z-index: 10; font: italic 900 26px/1 var(--num); color: #00f0ff;
+    text-shadow: 0 0 14px #00f0ff; pointer-events: none; transition: transform .15s; }
+</style>
+</head>
+<body>
+<div id="speed"><b>0</b>KM/H</div>
+<div id="mult">x1</div>
+<script src="../../vendor/three.min.js"></script>
+<script src="../../shared/arcade.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
