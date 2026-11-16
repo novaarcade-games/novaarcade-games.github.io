@@ -42,9 +42,18 @@ games/<id>/           one folder per game (index.html + game.js)
 vendor/three.min.js   three.js r159 (MIT)
 ```
 
+## Working on this project
+
+`docs/GUIDE.md` will be coming soon which is the full build guide: architecture, the patterns every game uses, how the 3D and crash physics work, how to test, and what "finished" means here. 
+
+```bash
+NODE_PATH=$(npm root -g) node tools/check.js   # for testing, load and play every page, fail on errors
+```
+
 ## Adding a game
 
 1. Create `games/my-game/index.html` + `game.js`. Copy one of the 2D games as a starting point.
 2. In `game.js`, call `Arcade.shell({ id, title, howto, onStart })`. This gives you the HUD, the start and game-over screens, pause and best scores. Use `S.setScore()` / `S.addScore()` and `S.gameOver()`.
 3. Add an entry to `assets/games.js`.
 4. Optional: add a plan to `tools/thumbs.js` and run it (with the site served on :8765) to screenshot a thumbnail.
+5. Run `tools/check.js`. The guide will have more information.
