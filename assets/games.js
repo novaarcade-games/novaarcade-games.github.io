@@ -1,7 +1,13 @@
 /* Game catalogue — add a new entry here and drop the game in games/<id>/ */
 window.GAMES = [
   {
-    id: "neon-drift", title: "Neon Drift", is3d: true, featured: true, isNew: true,
+    id: "redline-highway", title: "Redline Highway", is3d: true, featured: true, isNew: true,
+    tagline: "Realistic highway racing. Thread traffic at 400 km/h.",
+    desc: "An endless highway run in a hypercar. Pick a realistic or neon look and one-way or two-way traffic, then chain close calls to refill nitro. Get it wrong and the crash physics take over.",
+    cats: ["3d", "racing", "action"], color: "#ff4a1c", controls: "← → ↑ ↓ / touch"
+  },
+  {
+    id: "neon-drift", title: "Neon Drift", is3d: true, featured: true,
     tagline: "Thread a synthwave highway at 500 km/h.",
     desc: "A 3D speed run through a retro-future grid. Weave between neon blocks, chain orbs for a score multiplier and skim obstacles for close-call bonuses as the road keeps getting faster.",
     cats: ["3d", "action", "racing"], color: "#ff2a8a", controls: "← → / tap sides"
@@ -53,6 +59,7 @@ window.GAMES = [
 window.CATEGORIES = [
   { id: "all", label: "All games" },
   { id: "3d", label: "3D" },
+  { id: "racing", label: "Racing" },
   { id: "action", label: "Action" },
   { id: "one-tap", label: "One-tap" },
   { id: "puzzle", label: "Puzzle" },

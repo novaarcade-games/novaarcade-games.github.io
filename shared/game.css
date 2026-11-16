@@ -101,6 +101,8 @@ canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
 
 .ub-panel {
   width: min(420px, 100%);
+  max-height: calc(100vh - 20px);
+  overflow-y: auto;
   text-align: center;
   padding: 28px 24px 22px;
   border-radius: 22px;

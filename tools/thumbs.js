@@ -4,9 +4,14 @@ const { chromium } = require('playwright');
 const path = require('path');
 const OUT = path.join(__dirname, '..', 'assets', 'thumbs');
 const BASE = process.env.BASE || 'http://localhost:8765';
-const HIDE = '.ub-hud,.ub-overlay,.ub-popup,#bar,#speed,#mult,#combo,#big{display:none!important}';
+const HIDE = '.ub-hud,.ub-overlay,.ub-popup,#bar,#speed,#mult,#combo,#big,#hud,#tag{display:none!important}';
 
 const plans = {
+  'redline-highway': async p => {
+    await p.evaluate(() => { localStorage.setItem('ubg:redline:mode', '"real"'); localStorage.setItem('ubg:redline:traffic', '"one"'); });
+    await p.reload(); await p.waitForTimeout(2500);
+    await p.keyboard.press('Enter'); await p.keyboard.down('ArrowUp'); await p.waitForTimeout(9000);
+  },
   'neon-drift': async p => { await p.waitForTimeout(400); await p.keyboard.press('Space'); await p.waitForTimeout(2600); },
   'skyline-stack': async p => {
     await p.keyboard.press('Space');

@@ -348,6 +348,7 @@
 
   window.Arcade = {
     store: store, sfx: sfx, shell: shell, fitCanvas: fitCanvas, loop: loop,
+    audio: function () { var c = ac(); return c ? { ctx: c, master: master } : null; },
     glow: glow, Particles: Particles, Shake: Shake, popup: popup, fmt: fmt, params: params,
     rand: function (a, b) { return a + Math.random() * (b - a); },
     clamp: function (v, a, b) { return v < a ? a : v > b ? b : v; },

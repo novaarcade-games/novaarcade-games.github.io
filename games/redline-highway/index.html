@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Redline Highway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,700;0,800;0,900;1,900&family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../shared/game.css">
+<style>
+  #hud { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 10; pointer-events: none; text-align: center;
+    opacity: 0; transition: opacity .3s; }
+  #hud.on { opacity: 1; }
+  #spd b { display: block; font: italic 900 clamp(44px, 9vw, 68px)/0.9 var(--num); color: #fff; text-shadow: 0 2px 18px rgba(0,0,0,.6); }
+  #spd span { font: 800 12px/1 var(--display); letter-spacing: .3em; color: rgba(255,255,255,.75); text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+  .bars { display: flex; gap: 10px; margin-top: 8px; justify-content: center; }
+  .bar { width: min(150px, 34vw); }
+  .bar div { height: 8px; border-radius: 99px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.25); overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; border-radius: 99px; }
+  .bar.nos i { background: linear-gradient(90deg, #00b7ff, #7cf9ff); box-shadow: 0 0 10px #00d0ff; }
+  .bar.dmg i { background: linear-gradient(90deg, #ffb000, #ff2a2a); }
+  .bar span { display: block; margin-top: 3px; font: 800 10px/1 var(--display); letter-spacing: .25em; color: rgba(255,255,255,.75); text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+  #tag { position: fixed; right: 14px; top: 62px; z-index: 10; pointer-events: none; text-align: right;
+    font: italic 900 24px/1.1 var(--num); color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.7); }
+  #tag small { display: block; font: 800 11px/1.3 var(--display); letter-spacing: .18em; font-style: normal; color: #ffd23f; }
+  #touch { position: fixed; left: 0; right: 0; bottom: 110px; z-index: 12; display: none; justify-content: space-between; padding: 0 14px; pointer-events: none; }
+  #touch.on { display: flex; }
+  #touch button { pointer-events: auto; width: 84px; height: 62px; border-radius: 16px; border: 1px solid rgba(255,255,255,.3);
+    background: rgba(0,0,0,.4); color: #fff; font: 800 13px/1 var(--display); letter-spacing: .1em; backdrop-filter: blur(4px); touch-action: none; }
+  #touch button:active { background: rgba(255,255,255,.25); }
+  .rl-opts { margin: 16px 0 0; display: grid; gap: 10px; }
+  .rl-row { display: flex; align-items: center; gap: 10px; }
+  .rl-row > span { width: 74px; text-align: left; font: 800 11px/1 var(--display); letter-spacing: .16em; color: var(--muted); }
+  .seg { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 12px; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+  .seg button { appearance: none; border: 0; border-radius: 9px; padding: 9px 6px; cursor: pointer; background: none; color: var(--muted); font: 700 15px/1 var(--font); letter-spacing: .03em; transition: all .15s; }
+  .seg button:hover { color: #fff; }
+  .seg button.on { background: #fff; color: #07020f; box-shadow: 0 0 18px rgba(255,255,255,.25); }
+  .rl-stats { display: flex; justify-content: center; gap: 18px; margin-top: 12px; }
+  .rl-stats div { font: 800 18px/1.1 var(--num); color: #fff; }
+  .rl-stats small { display: block; font: 700 10px/1.4 var(--display); letter-spacing: .16em; color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="hud">
+  <div id="spd"><b>0</b><span>KM/H</span></div>
+  <div class="bars">
+    <div class="bar nos"><div><i></i></div><span>NITRO</span></div>
+    <div class="bar dmg"><div><i></i></div><span>DAMAGE</span></div>
+  </div>
+</div>
+<div id="tag"></div>
+<div id="touch"><button id="tb" type="button">BRAKE</button><button id="tn" type="button">NITRO</button></div>
+<script src="../../vendor/three.min.js"></script>
+<script src="../../shared/arcade.js"></script>
+<script src="cars.js"></script>
+<script src="world.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
