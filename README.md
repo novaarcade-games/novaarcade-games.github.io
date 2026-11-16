@@ -6,7 +6,7 @@ A fast, good-looking browser game site. Every game is made for it, runs fully in
 
 | Game | Type | Controls |
 |---|---|---|
-| **Redline Highway** | 3D highway traffic racer (three.js): realistic or neon look, one-way or two-way traffic, nitro, crash physics | ← → ↑ ↓, Shift nitro, C camera |
+| **Redline Highway** | 3D highway traffic racer (three.js): realistic or neon look, one-way or two-way traffic, optional pedestrians and bikers, nitro, crash physics | ← → ↑ ↓, Shift nitro, C camera |
 | **Neon Drift** | 3D synthwave highway dodger (three.js) | ← → / tap the left or right side |
 | **Skyline Stack** | 3D timing tower builder (three.js) | Tap / Space |
 | **Void Swarm** | Wave survival shooter with level-up upgrades | WASD / drag |

@@ -7,7 +7,7 @@
   function rnd(a, b) { return a + Math.random() * (b - a); }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
-  var mode = store.get("redline:mode", "real"), trafficMode = store.get("redline:traffic", "one");
+  var mode = store.get("redline:mode", "real"), trafficMode = store.get("redline:traffic", "one"), peopleOn = store.get("redline:people", true);
 
   var S = A.shell({
     id: "redline-highway",
@@ -23,21 +23,23 @@
     opt.className = "rl-opts";
     opt.innerHTML =
       '<div class="rl-row"><span>STYLE</span><div class="seg" data-k="mode"><button type="button" data-v="real">Realistic</button><button type="button" data-v="neon">Neon</button></div></div>' +
-      '<div class="rl-row"><span>TRAFFIC</span><div class="seg" data-k="traffic"><button type="button" data-v="one">One-way</button><button type="button" data-v="two">Two-way</button></div></div>';
+      '<div class="rl-row"><span>TRAFFIC</span><div class="seg" data-k="traffic"><button type="button" data-v="one">One-way</button><button type="button" data-v="two">Two-way</button></div></div>' +
+      '<div class="rl-row"><span>PEOPLE</span><div class="seg" data-k="people"><button type="button" data-v="on">Walkers &amp; bikers</button><button type="button" data-v="off">Off</button></div></div>';
     panel.insertBefore(opt, panel.querySelector(".ub-play"));
     function paint() {
       opt.querySelectorAll("button").forEach(function (b) {
         var k = b.parentNode.dataset.k;
-        b.classList.toggle("on", b.dataset.v === (k === "mode" ? mode : trafficMode));
+        b.classList.toggle("on", b.dataset.v === (k === "mode" ? mode : k === "traffic" ? trafficMode : peopleOn ? "on" : "off"));
       });
     }
     opt.querySelectorAll("button").forEach(function (b) {
       b.addEventListener("click", function () {
         var k = b.parentNode.dataset.k;
         if (k === "mode") { mode = b.dataset.v; store.set("redline:mode", mode); }
-        else { trafficMode = b.dataset.v; store.set("redline:traffic", trafficMode); }
+        else if (k === "traffic") { trafficMode = b.dataset.v; store.set("redline:traffic", trafficMode); }
+        else { peopleOn = b.dataset.v === "on"; store.set("redline:people", peopleOn); }
         b.blur(); paint(); sfx.click();
-        if (!S.playing) { build(); toAttract(); }
+        if (!S.playing && k !== "people") { build(); toAttract(); }
       });
     });
     paint();
@@ -153,6 +155,7 @@
     if (world) world.dispose();
     scene.clear();
     RL.disposeCarCache();
+    RL.disposePeopleCache();
   }
   function build() {
     disposeScene();
@@ -162,7 +165,7 @@
     lanes = two
       ? [{ x: -5.4, dir: -1, speed: 26 }, { x: -1.8, dir: -1, speed: 31 }, { x: 1.8, dir: 1, speed: 31 }, { x: 5.4, dir: 1, speed: 26 }]
       : [{ x: -5.4, dir: 1, speed: 37 }, { x: -1.8, dir: 1, speed: 33 }, { x: 1.8, dir: 1, speed: 29 }, { x: 5.4, dir: 1, speed: 25 }];
-    traffic = []; pool = {}; bodies = []; chunks = []; debrisGeo = null; P = null;
+    traffic = []; pool = {}; bodies = []; chunks = []; people = []; debrisGeo = null; P = null;
     buildFx();
     makePlayer();
     built = mode + trafficMode;
@@ -272,9 +275,13 @@
         if (ahead > 0 && ahead < 26 + e.speed * 0.6) want = Math.min(want, o.dir === e.dir ? o.speed - (ahead < 12 ? 3 : 0) : 0);
       }
       if (driving && e.dir > 0 && Math.abs(P.x - e.x) < 1.7 && e.z > 0 && e.z < 26 + e.speed * 0.6) want = Math.min(want, Math.max(0, P.speed - (e.z < 12 ? 3 : 0)));
+      for (j = 0; j < people.length; j++) {
+        var pp = people[j], ap = (e.z - pp.z) * e.dir;
+        if (!pp.hit && pp.kind === "cross" && ap > 0 && ap < 60 && Math.abs(pp.x - e.x) < 2.4) want = Math.min(want, Math.max(0, (ap - 9) * 0.6));
+      }
       for (j = 0; j < bodies.length; j++) {
         var b = bodies[j], ab = (e.z - b.pos.z) * e.dir;
-        if (ab > 0 && ab < 110 && Math.abs(b.pos.x - e.x) < 3.2) want = Math.min(want, Math.max(0, (ab - 14) * 0.5));
+        if (!b.light && ab > 0 && ab < 110 && Math.abs(b.pos.x - e.x) < 3.2) want = Math.min(want, Math.max(0, (ab - 14) * 0.5));
       }
       if (e.speed > want) e.speed = Math.max(want, e.speed - 11 * dt); else e.speed = Math.min(want, e.speed + 3 * dt);
       var braking = e.speed > want + 0.5;
@@ -324,7 +331,7 @@
       // wreck pile-ups
       for (j = 0; j < bodies.length; j++) {
         var bb = bodies[j];
-        if (bb.pos.y < 2.6 && Math.abs(bb.pos.x - e.x) < e.hw + bb.he.x * 0.9 && Math.abs(bb.pos.z - e.z) < e.hl + bb.he.z * 0.8) {
+        if (!bb.light && bb.pos.y < 2.6 && Math.abs(bb.pos.x - e.x) < e.hw + bb.he.x * 0.9 && Math.abs(bb.pos.z - e.z) < e.hl + bb.he.z * 0.8) {
           toBody(e); impact(e.body, bb); break;
         }
       }
@@ -332,7 +339,7 @@
     }
   }
 
-  function closeCall(e, rel) {
+  function closeCall(e, rel, label) {
     var head = e.dir < 0;
     combo = comboT > 0 ? Math.min(combo + 1, 12) : 1;
     comboT = 3.2;
@@ -341,7 +348,151 @@
     score += pts;
     P.nitro = Math.min(1, P.nitro + (head ? 0.22 : 0.14));
     sfx.coin(1 + combo * 0.06);
-    A.popup((head ? "HEAD-ON MISS" : "CLOSE CALL") + (combo > 1 ? " x" + combo : "") + "  +" + pts, window.innerWidth / 2, window.innerHeight * 0.36, head ? "#ff5a5a" : "#ffd23f", 20 + Math.min(combo, 8));
+    A.popup((label || (head ? "HEAD-ON MISS" : "CLOSE CALL")) + (combo > 1 ? " x" + combo : "") + "  +" + pts, window.innerWidth / 2, window.innerHeight * 0.36, head ? "#ff5a5a" : "#ffd23f", 20 + Math.min(combo, 8));
+  }
+
+  /* -------------------------------------------------------------- people */
+  // Pedestrians, cyclists and motorbike riders. They are light: hitting one costs
+  // damage, speed and points instead of ending the run, and the same rigid-body
+  // code that tumbles wrecked cars throws them (bodies flagged `light`).
+  var people = [], pplAcc = 0, pplGap = 160;
+  var pplTest = A.params.has("ppltest") ? 1 : 0;
+  var KINDS = {
+    walk: { hw: 0.3, hl: 0.25, hh: 0.88, mass: 75 }, cross: { hw: 0.3, hl: 0.25, hh: 0.88, mass: 75 },
+    cycle: { hw: 0.35, hl: 0.85, hh: 0.5, mass: 16 }, moto: { hw: 0.42, hl: 1.05, hh: 0.55, mass: 210 }
+  };
+  function spawnPerson(z, forceKind) {
+    var r = Math.random(), kind = forceKind || (r < 0.3 ? "walk" : r < 0.42 ? "cross" : r < 0.72 ? "cycle" : "moto");
+    var two = trafficMode === "two", K = KINDS[kind], side = Math.random() < 0.5 ? -1 : 1;
+    var p = { kind: kind, hw: K.hw, hl: K.hl, hh: K.hh, mass: K.mass, z: z, vx: 0, dir: 1, hit: false, passed: false, ph: rnd(0, 6), bodies: [], rider: null, riderMesh: null };
+    if (kind === "moto") {
+      // filters between lanes, faster than the cars
+      p.dir = two && Math.random() < 0.4 ? -1 : 1;
+      p.x = two ? p.dir * 3.6 : [-3.6, 0, 3.6][(Math.random() * 3) | 0];
+      p.speed = rnd(38, 47);
+      if (!forceKind && frameV - p.dir * p.speed < 5) return null; // would never reach the player
+    } else if (kind === "cycle") {
+      p.dir = two ? side : 1; p.x = side * 7.7; p.speed = rnd(6, 9);
+    } else if (kind === "walk") {
+      p.dir = Math.random() < 0.5 ? -1 : 1; p.x = side * 8.5; p.speed = rnd(1.2, 1.8);
+    } else {
+      p.x = side * 8.6; p.vx = -side * rnd(1.7, 2.8); p.speed = 0; // jaywalker
+    }
+    p.vz = -p.dir * p.speed;
+    var obj = kind === "walk" || kind === "cross" ? RL.makePerson(T) : RL.makeBike(T, kind === "moto");
+    p.mesh = obj.group;
+    p.fig = obj.rider || obj;
+    p.rider = obj.rider || null;
+    p.mesh.rotation.y = kind === "cross" ? (p.vx > 0 ? -Math.PI / 2 : Math.PI / 2) : (p.dir > 0 ? 0 : Math.PI);
+    p.mesh.position.set(p.x, 0, p.z);
+    scene.add(p.mesh);
+    people.push(p);
+    return p;
+  }
+  function removePerson(p) {
+    for (var i = 0; i < p.bodies.length; i++) { var k = bodies.indexOf(p.bodies[i]); if (k >= 0) bodies.splice(k, 1); }
+    scene.remove(p.mesh);
+    if (p.riderMesh) scene.remove(p.riderMesh);
+  }
+  // knock a person/bike away: hvx, hvz = ground velocity of whatever hit them
+  function fling(p, hvx, hvz) {
+    if (p.hit) return;
+    p.hit = true;
+    var dv = Math.abs(hvz - p.vz) + Math.abs(hvx - p.vx), k = Math.min(12, 3 + dv * 0.14), up = Math.min(9, 2.5 + dv * 0.07);
+    function launch(mesh, hw, hh, hl, mass, boost) {
+      mesh.updateWorldMatrix(true, false);
+      var wp = new V3().setFromMatrixPosition(mesh.matrixWorld);
+      var ent = { x: wp.x, z: wp.z, hw: hw, hh: hh, hl: hl, mass: mass, mesh: mesh };
+      var b = makeBody(ent, new V3(hvx * 0.9 + rnd(-3, 3), up * boost, p.vz + (hvz - p.vz) * 1.08));
+      b.pos.y = wp.y + hh; b.light = true;
+      b.I = mass * (hw * hw + hh * hh + hl * hl) / 2.4;
+      b.w.set(rnd(-1, 1) * k, rnd(-1, 1) * k * 0.6, rnd(-1, 1) * k);
+      p.bodies.push(b);
+    }
+    var f = p.fig;
+    f.arms[0].rotation.set(0, 0, -2.1); f.arms[1].rotation.set(0, 0, 2.1);
+    f.legs[0].rotation.x = 0.5; f.legs[1].rotation.x = -0.4; f.upper.rotation.x = 0;
+    if (p.rider) {
+      // the rider leaves the bike and tumbles separately
+      p.mesh.updateWorldMatrix(true, true);
+      scene.attach(p.rider.group);
+      p.riderMesh = p.rider.group;
+      launch(p.riderMesh, 0.3, 0.88, 0.25, 75, 1.3);
+    }
+    launch(p.mesh, p.hw, p.hh, p.hl, p.mass, 1);
+    sfx.tone(120, 0.12, "sine", 0.25, -40); sfx.noise(0.12, 0.2, 500);
+  }
+  function hitByPlayer(p) {
+    var heavy = p.kind === "moto";
+    fling(p, P.vx, -P.speed);
+    P.damage += heavy ? 26 : 12;
+    P.speed *= heavy ? 0.88 : 0.96;
+    combo = 0; comboT = 0;
+    score = Math.max(0, score - 300);
+    shake = Math.max(shake, heavy ? 0.7 : 0.45);
+    sfx.hit();
+    if (heavy) sparks(p.x, 0.5, 0, 24, 0, 2, -P.speed * 0.8, 6);
+    A.popup((heavy ? "BIKER" : p.kind === "cycle" ? "CYCLIST" : "PEDESTRIAN") + " HIT  -300", window.innerWidth / 2, window.innerHeight * 0.42, "#ff4d4d", 20);
+  }
+  function updatePeople(dt) {
+    var driving = state === "drive", i, j;
+    if (driving && peopleOn) {
+      pplAcc += frameV * dt;
+      if (pplTest && pplAcc > 90) {
+        // dev aid (?ppltest): put each kind straight in the player's path to exercise the hit physics
+        pplAcc = 0;
+        var tp = spawnPerson(-140, ["walk", "cycle", "moto"][pplTest++ % 3]);
+        tp.x = P.x; tp.vx = 0; tp.dir = 1; tp.vz = -Math.min(tp.speed, 8); tp.kind = tp.kind === "cross" ? "walk" : tp.kind; tp.mesh.rotation.y = 0;
+      } else if (pplAcc > pplGap && people.length < 14) { pplAcc = 0; pplGap = rnd(110, 300) / density(); spawnPerson(SPAWN_Z); }
+    }
+    for (i = people.length - 1; i >= 0; i--) {
+      var p = people[i];
+      if (p.hit) {
+        var gone = true;
+        for (j = 0; j < p.bodies.length; j++) if (p.bodies[j].pos.z < 90 && p.bodies[j].pos.z > -900) gone = false;
+        if (gone) { removePerson(p); people.splice(i, 1); }
+        continue;
+      }
+      // animation: walk cycle or pedalling
+      var f = p.fig;
+      if (p.kind === "walk" || p.kind === "cross") {
+        p.ph += dt * 7;
+        var sw = Math.sin(p.ph) * 0.6;
+        f.legs[0].rotation.x = sw; f.legs[1].rotation.x = -sw; f.arms[0].rotation.x = -sw * 0.6; f.arms[1].rotation.x = sw * 0.6;
+      } else if (p.kind === "cycle") {
+        p.ph += dt * 9;
+        f.legs[0].rotation.x = 0.85 + Math.sin(p.ph) * 0.45; f.legs[1].rotation.x = 0.85 - Math.sin(p.ph) * 0.45;
+      }
+      if (p.kind === "cross") {
+        p.x += p.vx * dt;
+        if (Math.abs(p.x) > 8.55 && p.x * p.vx > 0) { // reached the far side: carry on along the shoulder
+          p.kind = "walk"; p.vx = 0; p.dir = Math.random() < 0.5 ? -1 : 1; p.speed = 1.5; p.vz = -p.dir * p.speed;
+          p.mesh.rotation.y = p.dir > 0 ? 0 : Math.PI;
+        }
+      }
+      p.z += (p.vz + frameV) * dt;
+      p.mesh.position.set(p.x, 0, p.z);
+
+      if (driving) {
+        var dx = Math.abs(p.x - P.x);
+        if (dx < p.hw + P.hw && Math.abs(p.z) < p.hl + P.hl) { hitByPlayer(p); continue; }
+        if (!p.passed && p.z > 0.4) {
+          p.passed = true;
+          var gap = dx - p.hw - P.hw, rel = frameV + p.vz;
+          if (rel > 9 && gap < 1.0) closeCall(p, rel, "NEAR MISS");
+        }
+      }
+      // run over by traffic, or caught by a tumbling wreck
+      for (j = 0; j < traffic.length && !p.hit; j++) {
+        var e = traffic[j];
+        if (!e.body && Math.abs(e.x - p.x) < e.hw + p.hw && Math.abs(e.z - p.z) < e.hl + p.hl) fling(p, e.lat || 0, e.vz);
+      }
+      for (j = 0; j < bodies.length && !p.hit; j++) {
+        var b = bodies[j];
+        if (!b.light && b.pos.y < 2.2 && Math.abs(b.pos.x - p.x) < b.he.x + p.hw && Math.abs(b.pos.z - p.z) < b.he.z + p.hl && b.vel.lengthSq() > 9) fling(p, b.vel.x, b.vel.z);
+      }
+      if (!p.hit && (p.z > 60 || p.z < -900)) { removePerson(p); people.splice(i, 1); }
+    }
   }
 
   /* ------------------------------------------------------- crash physics */
@@ -420,7 +571,7 @@
           var jt = Math.min(0.62 * jn, tl / (1 / b.m + rt.lengthSq() / b.I));
           b.vel.x -= tx * jt / b.m; b.vel.z -= tz * jt / b.m;
           b.w.addScaledVector(rt, -jt / b.I);
-          if (jn / b.m > 1.2 && Math.random() < 0.5) sparks(b.pos.x + r.x, 0.05, b.pos.z + r.z, 3, b.vel.x * 0.5, 1.5, b.vel.z * 0.5, 3);
+          if (!b.light && jn / b.m > 1.2 && Math.random() < 0.5) sparks(b.pos.x + r.x, 0.05, b.pos.z + r.z, 3, b.vel.x * 0.5, 1.5, b.vel.z * 0.5, 3);
         }
       }
     }
@@ -450,13 +601,13 @@
         var rr = Math.min(a.he.x, a.he.z * 0.6) + Math.min(b.he.x, b.he.z * 0.6) + 0.5;
         var dx = a.pos.x - b.pos.x, dy = a.pos.y - b.pos.y, dz = a.pos.z - b.pos.z, d2 = dx * dx + dy * dy + dz * dz;
         if (d2 < rr * rr && d2 > 1e-4) {
-          var d = Math.sqrt(d2), push = (rr - d) / 2;
-          a.pos.x += dx / d * push; a.pos.z += dz / d * push; b.pos.x -= dx / d * push; b.pos.z -= dz / d * push;
+          var d = Math.sqrt(d2), push = rr - d, fa = b.m / (a.m + b.m), fb = 1 - fa;
+          a.pos.x += dx / d * push * fa; a.pos.z += dz / d * push * fa; b.pos.x -= dx / d * push * fb; b.pos.z -= dz / d * push * fb;
           var vn = (a.vel.x - b.vel.x) * dx / d + (a.vel.z - b.vel.z) * dz / d;
           if (vn < -1.5) {
             var jj = -1.3 * vn / (1 / a.m + 1 / b.m);
             a.vel.x += dx / d * jj / a.m; a.vel.z += dz / d * jj / a.m; b.vel.x -= dx / d * jj / b.m; b.vel.z -= dz / d * jj / b.m;
-            if (-vn > 6) { sparks((a.pos.x + b.pos.x) / 2, 0.6, (a.pos.z + b.pos.z) / 2, 14, 0, 2, a.vel.z, 5); sfx.noise(0.2, 0.2, 700); }
+            if (-vn > 6 && !a.light && !b.light) { sparks((a.pos.x + b.pos.x) / 2, 0.6, (a.pos.z + b.pos.z) / 2, 14, 0, 2, a.vel.z, 5); sfx.noise(0.2, 0.2, 700); }
           }
         }
       }
@@ -464,6 +615,7 @@
     // wreck smoke
     for (i = 0; i < bodies.length; i++) {
       var w = bodies[i];
+      if (w.light) continue;
       w.smoke -= dt;
       if (w.smoke <= 0) { w.smoke = 0.12; smoke(w.pos.x + rnd(-0.5, 0.5), w.pos.y + 0.4, w.pos.z + rnd(-1, 1), w.ent === P ? 2.4 : 1.6, 1.8, w.vel.z * 0.25); }
     }
@@ -605,6 +757,8 @@
   function resetRun() {
     clearTraffic();
     bodies.length = 0;
+    for (var q = 0; q < people.length; q++) removePerson(people[q]);
+    people.length = 0; pplAcc = 0;
     for (var i = chunks.length - 1; i >= 0; i--) { if (chunks[i].wheel) { scene.remove(chunks[i].mesh); chunks.splice(i, 1); } else { chunks[i].free = true; chunks[i].mesh.visible = false; } }
     for (i = 0; i < smokes.length; i++) { smokes[i].life = 0; smokes[i].s.visible = false; }
     for (i = 0; i < SPN; i++) { spLife[i] = 0; spPos[i * 3 + 1] = -50; }
@@ -767,6 +921,7 @@
     ["sedan", "hatch", "suv", "van", "truck", "sports"].forEach(function (ty, i) {
       var e = getCar(ty); e.mesh.position.set(i % 2 ? -5.4 : 5.4, 0, -4 - ((i / 2) | 0) * 8);
     });
+    ["walk", "cycle", "moto", "cross"].forEach(function (k, i) { var pr = spawnPerson(0, k); if (pr) { pr.x = -1.6 + i * 1.5; pr.z = -3.5; pr.vz = -26; pr.vx = 0; pr.kind = k === "cross" ? "walk" : k; } });
     t = (parseFloat(A.params.get("debug")) || 0) / 0.22;
   }
   A.loop(function (rdt) {
@@ -786,6 +941,7 @@
 
     world.scroll(frameV * dt);
     updateTraffic(dt);
+    updatePeople(dt);
     updateBodies(dt);
     updateChunks(dt);
     updateFx(dt);

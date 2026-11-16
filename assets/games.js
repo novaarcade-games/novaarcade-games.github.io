@@ -3,7 +3,7 @@ window.GAMES = [
   {
     id: "redline-highway", title: "Redline Highway", is3d: true, featured: true, isNew: true,
     tagline: "Realistic highway racing. Thread traffic at 400 km/h.",
-    desc: "An endless highway run in a hypercar. Pick a realistic or neon look and one-way or two-way traffic, then chain close calls to refill nitro. Get it wrong and the crash physics take over.",
+    desc: "An endless highway run in a hypercar. Pick a realistic or neon look, one-way or two-way traffic, and whether pedestrians and bikers share the road. Chain close calls to refill nitro. Get it wrong and the crash physics take over.",
     cats: ["3d", "racing", "action"], color: "#ff4a1c", controls: "← → ↑ ↓ / touch"
   },
   {
